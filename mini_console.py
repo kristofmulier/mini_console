@@ -434,7 +434,7 @@ class MiniConsole(QWidget):
             # * Activate progbar
             self.set_extprogbar_fad(False)
             self.set_extprogbar_max(n)
-            self.activate_extprogbar_logging(True, "Finished generating code")
+            self.activate_extprogbar_logging(True, "running build_ext")
             python = "python" if platform.system().lower() == "windows" else "python3"
             cmd = f"{python} freeze_embeetle.py --output \"{buildtarget_dirpath}\""
             self.execute_machine_cmd(cmd=cmd, callback=delete_cfiles, callbackArg=None, callbackThread=origthread)
