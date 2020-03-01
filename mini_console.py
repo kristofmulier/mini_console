@@ -432,7 +432,7 @@ class MiniConsole(QWidget):
             self.__miniEditor.printout("|                 STEP 3: FREEZE THE UPDATER                |\n", "#fcaf3e")
             self.__miniEditor.printout("|===========================================================|\n", "#fcaf3e")
             python = "python" if platform.system().lower() == "windows" else "python3"
-            cmd = f"{python} beetle.py"
+            cmd = f"{python} build.py"
             self.execute_machine_cmd(cmd=cmd, callback=goto_buildscript, callbackArg=None, callbackThread=origthread)
             return
 
