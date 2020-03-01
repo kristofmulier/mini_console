@@ -302,8 +302,9 @@ class MiniConsole(QWidget):
             assert QThread.currentThread() is origthread
             assert os.path.isdir(buildtarget_dirpath)
             assert os.path.isdir(beetle_core_dirpath)
+            # * 1. Clean target directory
             self.__miniEditor.printout("Clean target directory\n", "#fcaf3e")
-            self.__miniEditor.printout("----------------------\n", "#fcaf3e")
+            self.__miniEditor.printout("======================\n", "#fcaf3e")
             self.set_extprogbar_fad(True)
             self.set_extprogbar_max(0)
             self.activate_extprogbar_logging(False)
@@ -312,13 +313,29 @@ class MiniConsole(QWidget):
             if not success:
                 finish(False)
                 return
+
+            # * 2. Clean zipped folder
             zipfolder = os.path.join(os.path.dirname(buildtarget_dirpath), "embeetle.zip").replace('\\', '/')
             if os.path.isfile(zipfolder):
+                self.__miniEditor.printout("Clean zip folder\n", "#fcaf3e")
+                self.__miniEditor.printout("================\n", "#fcaf3e")
                 success = _fp_.delete_file(file_abspath=zipfolder, printfunc=self.__miniEditor.printout, catch_err=True)
-            self.__miniEditor.printout('\n')
-            if not success:
-                finish(False)
-                return
+                self.__miniEditor.printout('\n')
+                if not success:
+                    finish(False)
+                    return
+
+            # * 3. Clean 'beetle_updater_windows' or 'beetle_updater_linux'
+            beetle_updater_builddir = os.path.join(os.path.dirname(beetle_core_dirpath), f"beetle_updater_{platform.system().lower()}").replace('\\', '/')
+            if os.path.exists(beetle_updater_builddir):
+                self.__miniEditor.printout(f"Clean beetle_updater_xxx folder\n", "#fcaf3e")
+                self.__miniEditor.printout(f"===============================\n", "#fcaf3e")
+                success = _fp_.delete_dir(dir_abspath=beetle_updater_builddir, printfunc=self.__miniEditor.printout, catch_err=True)
+                self.__miniEditor.printout('\n')
+                if not success:
+                    finish(False)
+                    return
+
             finish(True)
             return
 
@@ -372,8 +389,10 @@ class MiniConsole(QWidget):
             assert QThread.currentThread() is origthread
             assert os.path.isdir(buildtarget_dirpath)
             assert os.path.isdir(beetle_core_dirpath)
-            self.__miniEditor.printout("STEP 1: Delete zip folder\n", "#fcaf3e")
-            self.__miniEditor.printout("-------------------------\n", "#fcaf3e")
+            self.__miniEditor.printout('\n')
+            self.__miniEditor.printout("|===========================================================|\n", "#fcaf3e")
+            self.__miniEditor.printout("|                STEP 1: Delete zip folder                  |\n", "#fcaf3e")
+            self.__miniEditor.printout("|===========================================================|\n", "#fcaf3e")
             zipfolder = os.path.join(os.path.dirname(buildtarget_dirpath), "embeetle.zip").replace('\\', '/')
             if os.path.isfile(zipfolder):
                 success = _fp_.delete_file(file_abspath=zipfolder, printfunc=self.__miniEditor.printout, catch_err=True)
@@ -384,15 +403,51 @@ class MiniConsole(QWidget):
             else:
                 self.__miniEditor.printout("No zip folder found.\n")
             self.__miniEditor.printout('\n')
-            goto_buildscript()
+            goto_updaterbuildscript()
             return
 
-        def goto_buildscript(*args):
+        def goto_updaterbuildscript(*args):
             assert QThread.currentThread() is origthread
             assert os.path.isdir(buildtarget_dirpath)
             assert os.path.isdir(beetle_core_dirpath)
-            self.__miniEditor.printout("STEP 2: Go to 'beetle_core/to_exe' directory\n", "#fcaf3e")
-            self.__miniEditor.printout("--------------------------------------------", "#fcaf3e")
+            self.__miniEditor.printout('\n')
+            self.__miniEditor.printout("|===========================================================|\n", "#fcaf3e")
+            self.__miniEditor.printout("|               STEP 2: GO TO 'beetle_updater_src'          |\n", "#fcaf3e")
+            self.__miniEditor.printout("|===========================================================|\n", "#fcaf3e")
+            nonlocal original_path
+            original_path = os.getcwd().replace('\\', '/')
+            beetle_updater_srcdir = os.path.join(os.path.dirname(beetle_core_dirpath), f"beetle_updater_src").replace('\\', '/')
+            cmd = f"cd \"{beetle_updater_srcdir}\""
+            self.execute_machine_cmd(cmd=cmd, callback=freeze_updater, callbackArg=None, callbackThread=origthread)
+            return
+
+        def freeze_updater(arg):
+            assert QThread.currentThread() is origthread
+            success, code, _ = arg
+            if not success:
+                finish(False)
+                return
+            self.__miniEditor.printout('\n')
+            self.__miniEditor.printout("|===========================================================|\n", "#fcaf3e")
+            self.__miniEditor.printout("|                 STEP 3: FREEZE THE UPDATER                |\n", "#fcaf3e")
+            self.__miniEditor.printout("|===========================================================|\n", "#fcaf3e")
+            python = "python" if platform.system().lower() == "windows" else "python3"
+            cmd = f"{python} beetle.py"
+            self.execute_machine_cmd(cmd=cmd, callback=goto_buildscript, callbackArg=None, callbackThread=origthread)
+            return
+
+        def goto_buildscript(arg):
+            assert QThread.currentThread() is origthread
+            success, code, _ = arg
+            if not success:
+                finish(False)
+                return
+            assert os.path.isdir(buildtarget_dirpath)
+            assert os.path.isdir(beetle_core_dirpath)
+            self.__miniEditor.printout('\n')
+            self.__miniEditor.printout("|===========================================================|\n", "#fcaf3e")
+            self.__miniEditor.printout("|             STEP 4: GO TO 'beetle_core/to_exe'            |\n", "#fcaf3e")
+            self.__miniEditor.printout("|===========================================================|\n", "#fcaf3e")
             nonlocal original_path
             original_path = os.getcwd().replace('\\', '/')
             to_exe_dirpath = os.path.join(beetle_core_dirpath, "to_exe").replace('\\', '/')
@@ -422,8 +477,10 @@ class MiniConsole(QWidget):
                     finish(False)
                     return
                 return
-            self.__miniEditor.printout("STEP 3: Freeze embeetle\n", "#fcaf3e")
-            self.__miniEditor.printout("-----------------------",   "#fcaf3e")
+            self.__miniEditor.printout('\n')
+            self.__miniEditor.printout("|===========================================================|\n", "#fcaf3e")
+            self.__miniEditor.printout("|                  STEP 5: FREEZE EMBEETLE                  |\n", "#fcaf3e")
+            self.__miniEditor.printout("|===========================================================|\n", "#fcaf3e")
             python = "python" if platform.system().lower() == "windows" else "python3"
             cmd = f"{python} freeze_embeetle.py --output \"{buildtarget_dirpath}\" --info-only"
             self.execute_machine_cmd(cmd=cmd, callback=parse_freeze_nr, callbackArg=None, callbackThread=origthread)
@@ -451,7 +508,9 @@ class MiniConsole(QWidget):
             self.activate_extprogbar_logging(False)
             beetle_core_dst = os.path.join(buildtarget_dirpath, "beetle_core").replace('\\', '/')
             self.__miniEditor.printout('\n')
-            self.__miniEditor.printout("Delete all c-files from 'beetle_core' directory...\n")
+            self.__miniEditor.printout("|===========================================================|\n", "#fcaf3e")
+            self.__miniEditor.printout("|        STEP 6: DELETE ALL C-FILES FROM 'beetle_core'      |\n", "#fcaf3e")
+            self.__miniEditor.printout("|===========================================================|\n", "#fcaf3e")
             for root, dirs, files in os.walk(beetle_core_dst):
                 for name in files:
                     if name.endswith('.c'):
@@ -467,8 +526,9 @@ class MiniConsole(QWidget):
         def copy_tools():
             assert QThread.currentThread() is origthread
             self.__miniEditor.printout('\n\n')
-            self.__miniEditor.printout("STEP 4: Copy 'beetle_tools'\n", "#fcaf3e")
-            self.__miniEditor.printout("---------------------------\n", "#fcaf3e")
+            self.__miniEditor.printout("|===========================================================|\n", "#fcaf3e")
+            self.__miniEditor.printout("|                  STEP 7: COPY 'beetle_tools'              |\n", "#fcaf3e")
+            self.__miniEditor.printout("|===========================================================|\n", "#fcaf3e")
             beetle_tools_src = os.path.join(os.path.dirname(beetle_core_dirpath), "beetle_tools").replace('\\', '/')
             beetle_tools_dst = os.path.join(buildtarget_dirpath, "beetle_tools").replace('\\', '/')
             if not os.path.isdir(beetle_tools_dst):
@@ -503,8 +563,9 @@ class MiniConsole(QWidget):
                 finish(False)
                 return
             self.__miniEditor.printout('\n')
-            self.__miniEditor.printout("STEP 5: Copy 'beetle_core/resources'\n", "#fcaf3e")
-            self.__miniEditor.printout("------------------------------------\n", "#fcaf3e")
+            self.__miniEditor.printout("|===========================================================|\n", "#fcaf3e")
+            self.__miniEditor.printout("|              STEP 8: COPY 'beetle_core/resources'         |\n", "#fcaf3e")
+            self.__miniEditor.printout("|===========================================================|\n", "#fcaf3e")
             resources_src = os.path.join(beetle_core_dirpath, "resources").replace('\\', '/')
             resources_dst = os.path.join(buildtarget_dirpath, "beetle_core/resources").replace('\\', '/')
             if not os.path.isdir(resources_dst):
@@ -539,8 +600,9 @@ class MiniConsole(QWidget):
                 finish(False)
                 return
             self.__miniEditor.printout('\n')
-            self.__miniEditor.printout(f"STEP 6: Copy 'beetle_updater_{platform.system().lower()}'\n", "#fcaf3e")
-            self.__miniEditor.printout(f"-------------------------------------\n", "#fcaf3e")
+            self.__miniEditor.printout("|===========================================================|\n", "#fcaf3e")
+            self.__miniEditor.printout("|               STEP 9: COPY 'beetle_updater_xxx'           |\n", "#fcaf3e")
+            self.__miniEditor.printout("|===========================================================|\n", "#fcaf3e")
             beetle_updater_src = os.path.join(os.path.dirname(beetle_core_dirpath), f"beetle_updater_{platform.system().lower()}").replace('\\', '/')
             beetle_updater_dst = os.path.join(buildtarget_dirpath, f"beetle_updater_{platform.system().lower()}").replace('\\', '/')
             if not os.path.isdir(beetle_updater_dst):
@@ -575,8 +637,9 @@ class MiniConsole(QWidget):
                 finish(False)
                 return
             self.__miniEditor.printout('\n')
-            self.__miniEditor.printout("STEP 7: Copy 'licenses'\n", "#fcaf3e")
-            self.__miniEditor.printout("-----------------------\n", "#fcaf3e")
+            self.__miniEditor.printout("|===========================================================|\n", "#fcaf3e")
+            self.__miniEditor.printout("|                    STEP 10: COPY 'licenses'               |\n", "#fcaf3e")
+            self.__miniEditor.printout("|===========================================================|\n", "#fcaf3e")
             licenses_src = os.path.join(os.path.dirname(beetle_core_dirpath), "licenses").replace('\\', '/')
             licenses_dst = os.path.join(buildtarget_dirpath, "licenses").replace('\\', '/')
             if not os.path.isdir(licenses_dst):
