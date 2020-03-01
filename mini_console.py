@@ -534,7 +534,7 @@ class MiniConsole(QWidget):
             if not os.path.isdir(beetle_tools_dst):
                 self.copy_folder(sourcedir_abspath = beetle_tools_src,
                                  targetdir_abspath = beetle_tools_dst,
-                                 exclusions        = ["Linux", ],
+                                 exclusions        = ["Linux", ] if platform.system().lower() == "windows" else ["Windows", ],
                                  show_prog         = True,
                                  delsource         = False,
                                  callback          = copy_resources,
@@ -546,7 +546,7 @@ class MiniConsole(QWidget):
                 beetle_tools_dst += '/'
                 self.rsync_local(src_dirpath    = beetle_tools_src,
                                  tgt_dirpath    = beetle_tools_dst,
-                                 exclusions     = ["Linux", ],
+                                 exclusions     = ["Linux", ] if platform.system().lower() == "windows" else ["Windows", ],
                                  callback       = copy_resources,
                                  callbackArg    = None,
                                  callbackThread = origthread)
