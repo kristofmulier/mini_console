@@ -1,0 +1,4 @@
+__pycache__
+.mypy_cache
+beetle_updater_windows/
+beetle_updater_linux/
